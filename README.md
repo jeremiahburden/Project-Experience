@@ -12,3 +12,6 @@ Welcome to a summary of my work experience! In this repository, you can find man
 - Industry
   - Prime Trading Development Intern
   - JA in Data Science
+
+
+Toggle through each branch to read about the work, examine some of the code, and enjoy some of the results (visualizations, statistics, and more!)
