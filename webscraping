@@ -1,8 +1,0 @@
-url <- paste0('https://finviz.com/quote.ashx?t=',label,'&p=d')
-webpage <- read_html(url)
-label_html <- html_nodes(webpage,'.adhesion_collapse , .snapshot-td2-cp')
-labels <- html_text(label_html)
-values_html1 <- html_nodes(webpage, '.snapshot-td2')
-data <- html_text(values_html)
-df <- data.frame(labels,data)
-df
