@@ -8,7 +8,7 @@ Welcome to a summary of my work experience! In this repository, you can find man
   - Analyzing Horse Racing Analytics
 - Research
   - Statistical Consultant for Psychological Research
-  - Biomath Cell Modeling
+  - Biomathematical Cell Modeling
 - Industry
   - Prime Trading Development Intern
   - JA in Data Science
