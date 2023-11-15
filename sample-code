@@ -1,0 +1,1138 @@
+---
+title: "Statistical Inference"
+author: "Jeremiah Burden"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Pre-processing
+
+```{r }
+# loads necessary libraries, sets working directory and downloads the data
+pacman::p_load(tidyverse,ggplot2,plotly,dplyr,magrittr,tidyr,RColorBrewer,reshape2,plyr,stringr,Hmisc,qqplotr,olsrr,factoextra,rsample,caret,rattle)
+
+setwd('/Users/jeremiahburden/Downloads/School/Fall 2023/MA 325 Statistical Consulting/Code') #change this to your working directory of wherever the file is
+#arm_data <- read_csv("renamed_arm_study_data.csv")
+arm_data <- read_csv("sept27_arm_study_data.csv")
+theme_set(theme_bw())
+```
+
+## Basic cleaning
+ #### removed due to sensitivity of analysis
+
+# Statistical Inference Results
+
+## Question 1 - Sport Success and Athletic Identity
+### Simple Linear Regression
+#### Testing Assumptions
+make qq plots
+```{r}
+qqnorm(dfathlete$aims_avg, pch = 1, frame = FALSE)
+qqline(dfathlete$aims_avg, col = "steelblue", lwd = 2)
+```
+
+```{r}
+#ggplot(dfathlete, aes(x=aims_avg)) + geom_histogram()
+```
+
+```{r}
+qqnorm(dfathlete$win_loss_ratio, pch = 1, frame = FALSE)
+qqline(dfathlete$win_loss_ratio, col = "steelblue", lwd = 2)
+```
+
+```{r}
+qqnorm(dfathlete$flipped_massey, pch = 1, frame = FALSE)
+qqline(dfathlete$flipped_massey, col = "steelblue", lwd = 2)
+```
+
+Win/Loss Ratio versus AIMS Average
+```{r}
+success_identity_model1 <- lm(win_loss_ratio ~ aims_avg,data=dfathlete)
+success_identity_model1
+```
+
+```{r}
+# 400 x 300
+ggplot(dfathlete, aes(aims_avg,win_loss_ratio)) +
+  geom_point() +
+  stat_smooth(method = lm,
+              se=FALSE) +
+  theme_bw()+
+  labs(y='Win/Loss Ratio',x='AIMS Average')
+```
+
+```{r}
+summary(success_identity_model1)
+```
+
+```{r}
+# 585 x 250
+autoplot(success_identity_model1)[1:2]
+```
+
+
+Flipped Massey Ranking versus AIMS Average
+```{r}
+success_identity_model2 <- lm(flipped_massey ~ aims_avg,data=dfathlete)
+success_identity_model2
+```
+
+```{r}
+# 400 x 300
+ggplot(dfathlete, aes(aims_avg,flipped_massey)) +
+  geom_point() +
+  stat_smooth(method = lm,se=FALSE) +
+  theme_bw()+
+  labs(y='Flipped Massey Ranking',x='AIMS Average')
+```
+
+```{r}
+summary(success_identity_model2)
+```
+
+```{r}
+# 585 x 250
+autoplot(success_identity_model2)[1:2]
+```
+
+win/loss ratio vs aims average for males only
+```{r}
+males <- dfathlete %>% 
+  filter(gender==2)
+success_identity_model3 <- lm(win_loss_ratio ~ aims_avg, data = males)
+success_identity_model3
+summary(success_identity_model3)
+```
+
+```{r}
+females <- dfathlete %>% 
+  filter(gender==1)
+success_identity_model4 <- lm(win_loss_ratio ~ aims_avg, data = females)
+success_identity_model4
+summary(success_identity_model4)
+```
+
+```{r}
+# 400 x 300
+ggplot(dfathlete,aes(x=win_loss_ratio,y=aims_avg,color=as.factor(gender)))+
+  geom_point()+
+  stat_smooth(method = lm,se=FALSE) +
+  labs(x="Win/Loss Ratio",y="AIMS Average",color="Gender")+
+  scale_color_discrete(labels= c("Female", "Male")) +
+  theme_bw() 
+```
+
+```{r}
+summary(success_identity_model3)
+```
+
+```{r}
+autoplot(success_identity_model3)[1:2]
+```
+
+### Independent Samples t-Test
+AIMS Average by Win/Loss Categories 
+```{r}
+success_identity_model4<-t.test(aims_avg ~ win_loss_category2, dfathlete, var.equal=FALSE, na.rm=TRUE)
+print(success_identity_model4)
+```
+
+```{r}
+# 585 x 300
+dfathlete %>% 
+  filter(!is.na(win_loss_category2)) %>% 
+  ggplot(mapping = aes(sample = aims_avg, color = win_loss_category2, fill = win_loss_category2)) +
+    stat_qq_line(identity=TRUE) +
+    stat_qq_point(col="black") +
+    facet_wrap(~ win_loss_category2, scales = "free") +
+    labs(x = "Theoretical Quantiles", y = "Sample Quantiles",fill=NA,color=NA)+
+    theme(legend.position = "none")
+```
+
+```{r}
+qqnorm(dfathlete$win_loss_category2, pch = 1, frame = FALSE)
+qqline(dfathletewin_loss_category2, col = "steelblue", lwd = 2)
+```
+
+## Question 2 - Type of Sport and Athletic Identity
+For each ANOVA test, we use the aov function to create the model and plot the relationship in a qq plot to check assumptions in two separate chunks.
+### ANOVA Sport Type (Team, Individual, Other) vs AIMS Average
+```{r}
+type_identity_model1 <- aov(aims_avg~sport_type,data=dfathlete)
+summary(type_identity_model1)
+```
+
+```{r}
+# 600 x 200
+dfathlete %>% 
+  filter(!is.na(sport_type)) %>% 
+  ggplot(mapping = aes(sample = aims_avg, color = sport_type, fill = sport_type)) +
+    stat_qq_line(identity=TRUE) +
+    stat_qq_point(col="black") +
+    facet_wrap(~ sport_type, scales = "free") +
+    labs(x = "Theoretical Quantiles", y = "Sample Quantiles",fill=NA,color=NA)+
+    theme(legend.position = "none")
+```
+
+### ANOVA Gendered Sport (Male, Female, Other) vs AIMS Average
+```{r}
+type_identity_model2 <- aov(aims_avg~original_athlete_status,data=dfathlete)
+summary(type_identity_model2)
+```
+
+```{r}
+# 600 x 200
+dfathlete$original_athlete_status <- mapvalues(dfathlete$original_athlete_status,from=c("1","2","3"),to=c("Male", "Female","Co-Ed"))
+dfathlete %>% 
+  ggplot(mapping = aes(sample = aims_avg, color = original_athlete_status, fill = original_athlete_status)) +
+    stat_qq_line(identity=TRUE) +
+    stat_qq_point(col="black") +
+    facet_wrap(~ original_athlete_status, scales = "free") +
+    labs(x = "Theoretical Quantiles", y = "Sample Quantiles",fill=NA,color=NA)+
+    theme(legend.position = "none")
+```
+
+
+### ANOVA Sport Season (Fall, Winter, Spring, Other) vs AIMS Average
+```{r}
+type_identity_model3 <- aov(aims_avg~sport_season,data=dfathlete)
+summary(type_identity_model3)
+```
+
+```{r}
+# 585 x 300
+dfathlete %>% 
+  filter(!is.na(sport_season)) %>% 
+  ggplot(mapping = aes(sample = aims_avg, color = sport_season, fill = sport_season)) +
+    stat_qq_line(identity=TRUE) +
+    stat_qq_point(col="black") +
+    facet_wrap(~ sport_season, scales = "free") +
+    labs(x = "Theoretical Quantiles", y = "Sample Quantiles",fill=NA,color=NA)+
+    theme(legend.position = "none")
+```
+
+
+## Question 3 - Meaning in Life and its indicators
+athletes
+```{r}
+meaning_indicator_model1 <- lm(mil_avg ~. ,data=averages_athletes)
+summary(meaning_indicator_model1)
+# 585 x 250
+#autoplot(meaning_indicator_model1)[1:2]
+#f_step <- ols_step_forward_p(meaning_indicator_model1)
+#print(f_step)
+#plot(f_step)
+```
+
+non-athletes
+```{r}
+meaning_indicator_model2 <- lm(mil_avg ~. ,data=averages_nonath)
+summary(meaning_indicator_model2)
+#autoplot(meaning_indicator_model2)[1:2] # 585 x 250
+```
+total
+```{r}
+meaning_indicator_model3 <- lm(mil_avg ~. ,data=averages_total)
+summary(meaning_indicator_model3)
+#autoplot(meaning_indicator_model3)[1:2] # 585 x 250
+```
+
+## Question 4 - Meaning in Life informed by a subset of its indicators
+### Multiple Linear Regression
+```{r}
+test_model <- lm(mil_avg~smirr_avg+smirc_avg+smirx_avg+rse_avg, data=averages_athletes)
+summary(test_model)
+# 585 x 250
+autoplot(test_model)[1:2]
+```
+
+### Best subset
+```{r}
+b_sub <- ols_step_best_subset(meaning_indicator_model1)
+b_sub
+#plot(b_sub)
+```
+
+### Neural Network
+```{r}
+library(neuralnet)
+```
+
+```{r}
+set.seed(245)
+data_rows <- floor(0.80 * nrow(arm_data))
+train_indices <- sample(c(1:nrow(arm_data)), data_rows)
+train_data <- arm_data[train_indices,]
+test_data <- arm_data[-train_indices,]
+```
+
+```{r}
+model = neuralnet(
+    as.factor(athlete_status)~nfcs_avg+smir_avg+rse_avg+scsr_avg,
+data=train_data,
+hidden=c(4,2),
+linear.output = FALSE
+)
+```
+
+```{r}
+plot(model,rep = "best")
+```
+
+```{r}
+pred <- predict(model, test_data)
+labels <- c("Athlete", "Non-Athlete")
+prediction_label <- data.frame(max.col(pred)) %>%     
+mutate(pred=labels[max.col.pred.]) %>%
+select(2) %>%
+unlist()
+
+table(test_data$athlete_status, prediction_label)
+```
+```{r}
+check = as.numeric(test_data$athlete_status) == max.col(pred)
+accuracy = (sum(check)/nrow(test_data))*100
+print(accuracy)
+```
+trying again to predict mil avg using only subset. now using all the averages
+```{r}
+subset_ath <- averages_athletes %>% 
+  select(c(mil_avg,smirr_avg,smirc_avg,smirx_avg,rse_avg))
+set.seed(12)
+split <- initial_split(subset_ath, prop = 0.80)
+train_data <- training(split)
+test_data <- testing(split)
+```
+
+```{r}
+model = neuralnet(
+    mil_avg~smirr_avg+smirc_avg+smirx_avg+rse_avg,
+data=train_data,
+hidden=c(3,2),
+linear.output = FALSE
+)
+```
+
+```{r}
+plot(model,rep = "best")
+```
+
+```{r}
+predictions<- predict(model,averages_athletes)
+mse <- mean((averages_athletes$mil_avg-predictions)^2)
+cat("Mean Squared Error (MSE): ",mse)
+```
+
+```{r}
+predictions <- predict(model, newdata = test_data)
+mse2 <- mean((test_data$mil_avg - predictions)^2)
+cat("Mean Squared Error (MSE) on the testing dataset:", mse2)
+```
+
+
+now using all the averages
+```{r}
+set.seed(12)
+split <- initial_split(averages_athletes, prop = 0.80)
+train_data1 <- training(split)
+test_data1 <- testing(split)
+```
+
+```{r}
+model1 = neuralnet(
+    mil_avg~.-mil_avg,
+data=train_data1,
+hidden=c(3,2),
+linear.output = FALSE
+)
+```
+
+```{r}
+plot(model1,rep = "best")
+```
+
+```{r}
+predictions1<- predict(model1,averages_athletes)
+mse3 <- mean((averages_athletes$mil_avg-predictions1)^2)
+cat("Mean Squared Error (MSE): ",mse3)
+```
+
+```{r}
+predictions3 <- predict(model1, newdata = test_data1)
+mse4 <- mean((test_data1$mil_avg - predictions1)^2)
+cat("Mean Squared Error (MSE) on the testing dataset:", mse4)
+
+```
+
+### K means clustering
+doesn't make sense here
+```{r}
+athletes_centered <- averages_athletes %>% 
+  scale()
+set.seed(2)
+ath_km <- kmeans(athletes_centered, centers = 4, nstart = 25)
+```
+
+```{r}
+fviz_cluster(ath_km, data = athletes_centered,
+             palette = c("#2E9FDF", "#00AFBB", "#E7B800","#42f5e9"),
+             geom = "point",
+             ellipse.type = "convex",
+             ggtheme = theme_bw()
+             )
+```
+
+### Decision Tree
+not super useful I think
+```{r}
+subset_ath <- averages_athletes %>% 
+  select(c(mil_avg,smirr_avg,smirc_avg,smirx_avg,rse_avg))
+set.seed(12)
+split <- initial_split(subset_ath, prop = 0.80)
+train_data <- training(split)
+test_data <- testing(split)
+```
+
+```{r}
+# mil_avg~smirr_avg+smirc_avg+smirx_avg+rse_avg
+```
+
+
+```{r}
+rate_model<- train(train_data[, -1],
+               train_data$mil_avg,
+               method = "rpart2",
+               trControl = trainControl(method = "cv"))
+```
+
+```{r}
+fancyRpartPlot(rate_model$finalModel)
+```
+
+```{r}
+train_preds <- predict(rate_model$finalModel, train_data[,-1], type = "vector")
+```
+
+```{r}
+table(train_data$mil_avg, train_preds)
+```
+
+```{r}
+table(train_data$rate, train_preds)
+```
+
+## EDA
+
+
+```{r}
+#exploring plots
+#pairs(dfavg)
+#pairs(smir)
+```
+
+```{r}
+ggplot(dfavg, aes(x=aims_avg))+
+  geom_histogram(binwidth=0.5)+
+  theme_bw()
+```
+
+```{r}
+# 683 x 438
+#athletes only
+dflong <- dfavg %>% 
+  pivot_longer(colnames(dfavg)) %>% 
+  as.data.frame()
+
+ggplot(dflong,aes(x=value))+
+  geom_histogram(binwidth=0.25)+
+  facet_wrap(~name,scales='free',
+             labeller = as_labeller(
+               c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average",aims_avg='AIMS Average',mil_avg='MiL Average')),nrow=3)+
+  labs(y="Count",x=NULL)+
+  theme_bw()
+```
+
+```{r}
+# 683 x 438
+# all
+
+
+dflong1 <- dfavg1 %>% 
+  pivot_longer(colnames(dfavg1)) %>% 
+  as.data.frame()
+
+ggplot(dflong1,aes(x=value))+
+  geom_histogram(binwidth=0.25)+
+  facet_wrap(~name,scales='free',
+             labeller = as_labeller(
+               c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average",mil_avg='MiL Average')),nrow=3)+
+  labs(y="Count",x=NULL)+
+  theme_bw()
+```
+
+
+```{r}
+ggplot(dflong, aes(x = value)) +    
+  geom_histogram(aes(y = ..density..)) + 
+  geom_density(col = "#1b98e0", size = 2) + 
+  facet_wrap(~ name, scales = "free")
+```
+
+```{r}
+#400 x 200
+ggplot(data = dfathlete) + 
+  geom_boxplot(mapping=aes(x = aims_avg)) + 
+  labs(x = "AIMS Average") +
+  theme_bw() +
+  theme(axis.text.y=element_blank(), 
+        axis.ticks.y = element_blank())
+
+summary_stats <- dfathlete %>% 
+  dplyr::summarize(min = min(aims_avg, na.rm = TRUE),
+            quant25 = quantile(aims_avg,probs=.25,na.rm=TRUE),
+            median = median(aims_avg, na.rm = TRUE),
+            quant75 = quantile(aims_avg,probs=.75,na.rm=TRUE),
+            max = max(aims_avg, na.rm = TRUE),
+            iqr = IQR(aims_avg, na.rm = TRUE),
+            range = max(aims_avg, na.rm = TRUE)-min(aims_avg, na.rm = TRUE),
+            count = n())
+print(summary_stats)
+```
+
+```{r}
+# not used or necessary
+ggplot(data = arm_data) + 
+  geom_boxplot(mapping = aes( x = mil_avg,y=as.factor(athlete_status))) + 
+  labs(x = "MiL Average",y="Athlete Status") +
+  theme_bw() +
+  theme(axis.text.y=element_blank(), 
+        axis.ticks.y = element_blank())
+```
+
+# EDA Results
+### Question 1 - Athletic Identity vs Sport Success
+
+#### Basic plots
+
+```{r}
+# n=25
+# 375 x 300
+ggplot(dfathlete,aes(x=win_loss_ratio,y=aims_avg,color=as.factor(gender)))+
+  geom_point()+
+  labs(x="Win/Loss Ratio",y="AIMS Average",color="Gender")+
+  scale_color_discrete(labels= c("Female", "Male")) +
+  theme_bw() 
+```
+
+```{r}
+# n=23
+# 375 x 300
+ggplot(dfathlete,aes(x=massey,y=aims_avg,color=as.factor(gender)))+
+  geom_point()+
+  scale_x_reverse()+
+  labs(x="Massey Ranking",y="AIMS Average",color="Gender")+
+  scale_color_discrete(labels= c("Female", "Male")) +
+  theme_bw()
+```
+
+#### Calculating the correlations
+
+```{r}
+cor(dfathwl$aims_avg,dfathwl$win_loss_ratio)
+cor(dfathm$aims_avg,dfathm$flipped_massey)
+
+dfathwlf <- dfathwl %>% 
+  filter(gender==1)
+dfathmf <- dfathm %>% 
+  filter(gender==1)
+
+cor(dfathwlf$aims_avg,dfathwlf$win_loss_ratio)
+cor(dfathmf$aims_avg,dfathmf$flipped_massey)
+
+dfathwlm <- dfathwl %>% 
+  filter(gender==2)
+dfathmm <- dfathm %>% 
+  filter(gender==2)
+
+cor(dfathwlm$aims_avg,dfathwlm$win_loss_ratio)
+cor(dfathmm$aims_avg,dfathmm$flipped_massey)
+```
+
+#### Win/Loss Category
+
+```{r}
+#making new categorical variable that breaks down team win percentage into 3 categories
+# 0 < Win/Loss Ratio <= 0.33 ~ low
+# 0.33 < Win/Loss Ratio <= 0.67 ~ medium
+# 0.67 < Win/Loss Ratio <= 1 ~ high
+
+# team sport only  
+dfathlete<- dfathlete %>% 
+  mutate(win_loss_category = 
+           case_when(
+             win_loss_ratio >= 0 & win_loss_ratio <= 0.33 ~ 'Low',
+             win_loss_ratio > 0.33 & win_loss_ratio <= 0.67 ~ 'Medium',
+             win_loss_ratio > 0.67 & win_loss_ratio <= 1 ~ 'High'))
+dfathlete$win_loss_category <- factor(dfathlete$win_loss_category, levels=c("Low", "Medium", "High"))
+
+teamathlete <- dfathlete %>% 
+  filter(!is.na(win_loss_category))
+```
+
+```{r}
+ggplot(data = teamathlete) + 
+  geom_boxplot(mapping = aes(x = aims_avg,
+                             y = win_loss_category)) + 
+  labs(y = "Win/Loss Category", x = "AIMS Average") +
+  theme_bw() 
+summary_stats <- teamathlete %>% 
+  group_by(win_loss_category) %>% 
+  dplyr::summarize(min = min(aims_avg, na.rm = TRUE),
+            quant25 = quantile(aims_avg,probs=.25,na.rm=TRUE),
+            median = median(aims_avg, na.rm = TRUE),
+            quant75 = quantile(aims_avg,probs=.75,na.rm=TRUE),
+            max = max(aims_avg, na.rm = TRUE),
+            iqr = IQR(aims_avg, na.rm = TRUE),
+            range = max(aims_avg, na.rm = TRUE)-min(aims_avg, na.rm = TRUE),
+            count = n())
+print(summary_stats)
+
+```
+
+#### Investigating Individual Questions
+Combining all of the graphs to self make a faceted chart is most valuable and space efficient
+##### Overall responses
+
+```{r}
+df2<- dfathlete %>% 
+  select(starts_with('aims')) %>% 
+  select(-aims_avg)
+df2<- df2 %>% pivot_longer(cols=everything(),
+                    names_to='question',
+                    values_to='response')
+
+df2$response <- mapvalues(df2$response,from=c(1,2,3,4,5,6,7),to=c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+df2$response <- factor(df2$response,levels = c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+df2$question <- mapvalues(df2$question,from=c("aims_self_identify","aims_sport_goals","aims_athletes_friends","aims_sport_importance","aims_sport_thinking","aims_feel_bad","aims_depressed"),to=c("AIMS Self Identify", "AIMS Sport Related Goals","AIMS Friends Who Are Athletes","AIMS Importance of Sport","AIMS Thinking about Sport","AIMS Feel Bad Doing Poorly","AIMS Depressed When Cannot Compete"))
+x_labels<- c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree")
+
+ggplot(df2, aes(y=question,fill=response)) + 
+    geom_bar() +
+  labs(y= "Question",
+       x="All Athletes",
+       fill="Response")+
+  scale_fill_brewer(palette = "RdYlBu") +
+  scale_y_discrete(labels= function(question) str_wrap(question, width = 15)) + 
+  theme_bw() +
+  theme(axis.text.x=element_blank(), 
+        axis.ticks.x = element_blank())
+```
+
+##### Low win/loss category
+
+```{r}
+dflow<- dfathlete %>% 
+  filter(dfathlete$win_loss_category =="Low") %>% 
+  select(starts_with('aims')) %>% 
+  select(-aims_avg) 
+dflow<- dflow %>% pivot_longer(cols=everything(),
+                    names_to='question',
+                    values_to='response')
+
+dflow$response <- mapvalues(dflow$response,from=c(1,2,3,4,5,6,7),to=c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+dflow$response <- factor(dflow$response,levels = c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+dflow$question <- mapvalues(dflow$question,from=c("aims_self_identify","aims_sport_goals","aims_athletes_friends","aims_sport_importance","aims_sport_thinking","aims_feel_bad","aims_depressed"),to=c("AIMS Self Identify", "AIMS Sport Related Goals","AIMS Friends Who Are Athletes","AIMS Importance of Sport","AIMS Thinking about Sport","AIMS Feel Bad Doing Poorly","AIMS Depressed When Cannot Compete"))
+x_labels<- c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree")
+
+ggplot(dflow, aes(y=question,fill=response)) + 
+    geom_bar() +
+  labs(y= "Question",
+       x="Low Win/Loss Category",
+       fill="Response")+
+  scale_fill_brewer(palette = "RdYlBu",drop=F) +
+  scale_y_discrete(labels= function(question) str_wrap(question, width = 15)) + 
+  theme_bw() +
+  theme(axis.text.x=element_blank(), 
+        axis.ticks.x = element_blank())
+```
+
+##### Medium win/loss category
+
+```{r}
+dfmed<- dfathlete %>% 
+  filter(dfathlete$win_loss_category =="Medium") %>% 
+  select(starts_with('aims')) %>% 
+  select(-aims_avg) 
+dfmed<- dfmed %>% pivot_longer(cols=everything(),
+                    names_to='question',
+                    values_to='response')
+
+dfmed$response <- mapvalues(dfmed$response,from=c(1,2,3,4,5,6,7),to=c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+dfmed$response <- factor(dfmed$response,levels = c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+dfmed$question <- mapvalues(dfmed$question,from=c("aims_self_identify","aims_sport_goals","aims_athletes_friends","aims_sport_importance","aims_sport_thinking","aims_feel_bad","aims_depressed"),to=c("AIMS Self Identify", "AIMS Sport Related Goals","AIMS Friends Who Are Athletes","AIMS Importance of Sport","AIMS Thinking about Sport","AIMS Feel Bad Doing Poorly","AIMS Depressed When Cannot Compete"))
+x_labels<- c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree")
+
+ggplot(dfmed, aes(y=question,fill=response)) + 
+    geom_bar() +
+  labs(y= "Question",
+       x="Medium Win/Loss Category",
+       fill="Response")+
+  scale_fill_brewer(palette = "RdYlBu",drop=F) +
+  scale_y_discrete(labels= function(question) str_wrap(question, width = 15)) + 
+  theme_bw() +
+  theme(axis.text.x=element_blank(), 
+        axis.ticks.x = element_blank())
+```
+
+##### High win/loss category
+
+```{r}
+dfhigh<- dfathlete %>% 
+  filter(dfathlete$win_loss_category =="High") %>% 
+  select(starts_with('aims')) %>% 
+  select(-aims_avg) 
+dfhigh<- dfhigh %>% pivot_longer(cols=everything(),
+                    names_to='question',
+                    values_to='response')
+
+dfhigh$response <- mapvalues(dfhigh$response,from=c(1,2,3,4,5,6,7),to=c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+dfhigh$response <- factor(dfhigh$response,levels = c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+dfhigh$question <- mapvalues(dfhigh$question,from=c("aims_self_identify","aims_sport_goals","aims_athletes_friends","aims_sport_importance","aims_sport_thinking","aims_feel_bad","aims_depressed"),to=c("AIMS Self Identify", "AIMS Sport Related Goals","AIMS Friends Who Are Athletes","AIMS Importance of Sport","AIMS Thinking about Sport","AIMS Feel Bad Doing Poorly","AIMS Depressed When Cannot Compete"))
+x_labels<- c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree")
+
+ggplot(dfhigh, aes(y=question,fill=response)) + 
+    geom_bar() +
+  labs(y= "Question",
+       x="High Win/Loss Category",
+       fill="Response")+
+  scale_fill_brewer(palette = "RdYlBu",drop=F) +
+  scale_y_discrete(labels= function(question) str_wrap(question, width = 15)) + 
+  theme_bw() +
+  theme(axis.text.x=element_blank(), 
+        axis.ticks.x = element_blank())
+```
+
+##### investigating response by individual question
+this doesn't show much more than what the previous chart already does
+```{r}
+# 500 x 350
+teamathlete$aims_self_identify <- mapvalues(teamathlete$aims_self_identify,from=c(1,2,3,4,5,6,7),to=c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))
+
+ggplot(teamathlete,aes(x=aims_self_identify,fill=win_loss_category))+
+  geom_bar(stat = "count")+
+  scale_x_discrete(drop=FALSE,limits=c("Strongly disagree", "Disagree","Somewhat disagree","Neutral","Somewhat agree","Agree","Strongly agree"))+
+  scale_fill_brewer(palette = "RdYlBu",drop=F) +
+  labs(fill="Win/Loss Category",x="AIMS Self Identify",y="Count")+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=90 ))
+```
+
+### Question 2 - Athletic Identity vs Sport Type
+
+#### Basic plots with summary statistics
+
+##### Sport Type vs AIMS Average
+
+```{r}
+ggplot(data = dfathlete) + 
+  geom_boxplot(mapping = aes(y = sport_type, x = aims_avg)) + 
+  labs(y = "Sport Type", x = "AIMS Average") +
+  theme_bw() 
+summary_stats <- dfathlete %>% 
+  group_by(sport_type) %>% 
+  dplyr::summarize(min = min(aims_avg, na.rm = TRUE),
+            quant25 = quantile(aims_avg,probs=.25,na.rm=TRUE),
+            median = median(aims_avg, na.rm = TRUE),
+            quant75 = quantile(aims_avg,probs=.75,na.rm=TRUE),
+            max = max(aims_avg, na.rm = TRUE),
+            iqr = IQR(aims_avg, na.rm = TRUE),
+            range = max(aims_avg, na.rm = TRUE)-min(aims_avg, na.rm = TRUE),
+            count = n())
+print(summary_stats)
+```
+
+##### Gender vs AIMS Average
+
+```{r}
+ggplot(data = dfathlete) + 
+  geom_boxplot(mapping = aes(y = as.factor(gender), x = aims_avg,group=as.factor(gender))) + 
+  labs(y = "Gender", x = "AIMS Average") +
+  theme_bw() +
+  scale_y_discrete(labels= c("Female", "Male")) 
+
+summary_stats <- dfathlete %>% 
+  group_by(as.factor(gender)) %>% 
+  summarize(min = min(aims_avg, na.rm = TRUE),
+            quant25 = quantile(aims_avg,probs=.25,na.rm=TRUE),
+            median = median(aims_avg, na.rm = TRUE),
+            quant75 = quantile(aims_avg,probs=.75,na.rm=TRUE),
+            max = max(aims_avg, na.rm = TRUE),
+            iqr = IQR(aims_avg, na.rm = TRUE),
+            range = max(aims_avg, na.rm = TRUE)-min(aims_avg, na.rm = TRUE),
+            count = n())
+print(summary_stats)
+```
+
+##### Gendered Sport vs AIMS Average
+
+```{r}
+dfathlete$original_athlete_status <- 
+  as.factor(dfathlete$original_athlete_status)
+dfathlete$original_athlete_status <-  mapvalues(dfathlete$original_athlete_status,from=c(1,2,3,4),to=c("Men's Team", "Women's Team","Co-Ed Team","Does not play"))
+  
+# 500 x 300
+ggplot(data = dfathlete) + 
+  geom_boxplot(mapping = aes(y = original_athlete_status, x = aims_avg,group=original_athlete_status)) + 
+  labs(y = "Gendered Sport", x = "AIMS Average") +
+  theme_bw() +
+  scale_y_discrete(labels= c("Men's Team", "Women's Team","Co-Ed Team","Does not play")) 
+
+summary_stats <- dfathlete %>% 
+  group_by(original_athlete_status) %>% 
+  dplyr::summarize(min = min(aims_avg, na.rm = TRUE),
+            quant25 = quantile(aims_avg,probs=.25,na.rm=TRUE),
+            median = median(aims_avg, na.rm = TRUE),
+            quant75 = quantile(aims_avg,probs=.75,na.rm=TRUE),
+            max = max(aims_avg, na.rm = TRUE),
+            iqr = IQR(aims_avg, na.rm = TRUE),
+            range = max(aims_avg, na.rm = TRUE)-min(aims_avg, na.rm = TRUE),
+            count = n())
+print(summary_stats)
+```
+
+##### Sport Season vs AIMS Average
+
+```{r}
+dfathlete$sport_season <- factor(dfathlete$sport_season, levels=c("Other", "Spring", "Winter","Fall"))
+ggplot(data = dfathlete) + 
+  geom_boxplot(mapping = aes(y = sport_season, x = aims_avg,group=sport_season)) + 
+  labs(y = "Sport Season", x = "AIMS Average") +
+  theme_bw()
+
+summary_stats <- dfathlete %>% 
+  group_by(sport_season) %>% 
+  dplyr::summarize(min = min(aims_avg, na.rm = TRUE),
+            quant25 = quantile(aims_avg,probs=.25,na.rm=TRUE),
+            median = median(aims_avg, na.rm = TRUE),
+            quant75 = quantile(aims_avg,probs=.75,na.rm=TRUE),
+            max = max(aims_avg, na.rm = TRUE),
+            iqr = IQR(aims_avg, na.rm = TRUE),
+            range = max(aims_avg, na.rm = TRUE)-min(aims_avg, na.rm = TRUE),
+            count = n())
+print(summary_stats)
+```
+
+#### Investigating type by team from Gendered sports
+
+##### Men's Sports
+
+```{r}
+maledf <- dfathlete %>% 
+  filter(!is.na(dfathlete$sport_men))
+maledf$sport_men <- mapvalues(maledf$sport_men,from=c(1,2,3,4,5,6,7,8,9,10,11),to=c("Baseball", "Basketball","Cross Country","Football","Golf","Lacrosse","Soccer","Tennis","Track & Field","Volleyball","Other"))
+
+
+ggplot(maledf,aes(x=factor(sport_men),y=aims_avg,fill=factor(age)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme_bw()+
+  labs(x="Men's Sport Played",y="AIMS Average",fill="Age")+
+  scale_fill_manual(values=c('red4' ,'red', 'blue2','blue4'))+
+  theme( axis.text.x  = element_text(angle=90 ))
+  
+```
+
+##### Women's Sports
+
+```{r}
+femaledf <- dfathlete %>% 
+  filter(!is.na(dfathlete$sport_women))
+femaledf$sport_women <- mapvalues(femaledf$sport_women,from=c(1,2,3,4,5,6,7,8,9,10,11),to=c("Basketball","Cross Country","Field Hockey","Golf","Lacrosse","Soccer","Softball","Tennis","Track & Field","Volleyball","Other"))
+
+
+ggplot(femaledf,aes(x=factor(sport_women),y=aims_avg,fill=factor(age)))+
+  geom_bar(stat = "identity", position = "dodge")+
+  theme_bw()+
+  labs(x="Women's Sport Played",y="AIMS Average",fill="Age")+
+  scale_fill_manual(values=c('red4' ,'red', 'blue2','blue4'))+
+  theme( axis.text.x  = element_text(angle=90 ))
+  
+```
+
+##### additional code
+
+```{r}
+#extra code to add the counts of groups to boxplots
+#+ annotate("text",
+#           x = 1:length(table(dfathlete$gender)),
+#           y = aggregate(aims_avg ~ gender, dfathlete, median)[ , 2],
+#           label = table(dfathlete$gender),
+#           col = "black",
+#           vjust = -1.5) 
+```
+
+```{r}
+#to group naturally with win/loss ratio instead of creating the categories
+ggplot(data = dfathlete) + 
+  geom_boxplot(mapping = aes(x = win_loss_ratio, y = aims_avg, group=cut_width(win_loss_ratio,0.4) )) + 
+  labs(x = "Win/Loss Ratio", y = "AIMS Average") +
+  theme_bw() 
+```
+
+### Question 3 - Meaning in Life vs its indicators
+
+#### Faceted scatter plot
+
+```{r}
+# Each relationship vs MiL Average (colored by athletes)
+# 850 x 519
+arm_data  %>%
+  gather(nmrq_avg,pss_avg,rse_avg,nfcs_avg,scsr_avg,smirr_avg,smirn_avg,smirx_avg,smirc_avg,smirb_avg,smir_avg, key = "var", value = "value") %>% 
+  ggplot(aes(x = mil_avg, y = value,color=as.factor(athlete_status),shape=as.factor(athlete_status))) +
+    geom_point() +
+    facet_wrap(~ var, scales = "free_y",
+               labeller = as_labeller(
+               c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average")), 
+             strip.position = "left") +
+  labs(x="MiL Average",color="Athlete Status",shape="Athlete Status")+
+  ylab(NULL)+
+    theme_bw() +
+  scale_color_discrete(labels= c("Athlete", "Non-Athlete")) +
+  scale_shape_discrete(labels= c("Athlete", "Non-Athlete")) +
+     theme(strip.background = element_blank(),
+           strip.placement = "outside",
+           legend.position = c(0.89, 0.16)) # c(0,0) bottom left, c(1,1) top-right)
+```
+
+#### Calculating all the correlation coefficients for the r table
+
+```{r}
+cor(dfathlete$mil_avg,dfathlete$nmrq_avg)
+cor(dfathlete$mil_avg,dfathlete$pss_avg)
+cor(dfathlete$mil_avg,dfathlete$rse_avg)
+cor(dfathlete$mil_avg,dfathlete$nfcs_avg)
+cor(dfathlete$mil_avg,dfathlete$scsr_avg)
+cor(dfathlete$mil_avg,dfathlete$smirr_avg)
+cor(dfathlete$mil_avg,dfathlete$smirn_avg)
+cor(dfathlete$mil_avg,dfathlete$smirx_avg)
+cor(dfathlete$mil_avg,dfathlete$smirc_avg)
+cor(dfathlete$mil_avg,dfathlete$smirb_avg)
+cor(dfathlete$mil_avg,dfathlete$smir_avg)
+```
+
+```{r}
+cor(arm_data$mil_avg,arm_data$nmrq_avg)
+cor(arm_data$mil_avg,arm_data$pss_avg)
+cor(arm_data$mil_avg,arm_data$rse_avg)
+cor(arm_data$mil_avg,arm_data$nfcs_avg)
+cor(arm_data$mil_avg,arm_data$scsr_avg)
+cor(arm_data$mil_avg,arm_data$smirr_avg)
+cor(arm_data$mil_avg,arm_data$smirn_avg)
+cor(arm_data$mil_avg,arm_data$smirx_avg)
+cor(arm_data$mil_avg,arm_data$smirc_avg)
+cor(arm_data$mil_avg,arm_data$smirb_avg)
+cor(arm_data$mil_avg,arm_data$smir_avg)
+```
+
+```{r}
+dfnonath <- arm_data %>% 
+  filter(athlete_status=="2") 
+dfnonath <- data.frame(lapply(dfnonath, function(x) as.numeric(as.numeric(x))))
+
+cor(dfnonath$mil_avg,dfnonath$nmrq_avg)
+cor(dfnonath$mil_avg,dfnonath$pss_avg)
+cor(dfnonath$mil_avg,dfnonath$rse_avg)
+cor(dfnonath$mil_avg,dfnonath$nfcs_avg)
+cor(dfnonath$mil_avg,dfnonath$scsr_avg)
+cor(dfnonath$mil_avg,dfnonath$smirr_avg)
+cor(dfnonath$mil_avg,dfnonath$smirn_avg)
+cor(dfnonath$mil_avg,dfnonath$smirx_avg)
+cor(dfnonath$mil_avg,dfnonath$smirc_avg)
+cor(dfnonath$mil_avg,dfnonath$smirb_avg)
+cor(dfnonath$mil_avg,dfnonath$smir_avg)
+```
+
+#### Creating the heat map of r values
+
+```{r}
+# only using the athletes (heat map)
+
+corr_mat <- round(cor(dfavg),2)  
+#head(corr_mat)
+melted_corr_mat <- melt(corr_mat)
+ggplot(data = melted_corr_mat, 
+       aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() +
+  scale_fill_distiller(palette="RdBu",direction=1,limits=c(-1,1))+
+  geom_text(aes(Var2, Var1, label = value), 
+          color = "black", size = 4)+
+  scale_y_discrete(label= c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average",mil_avg="MiL Average",aims_avg="AIMS Average"))+
+  scale_x_discrete(label= c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average",mil_avg="MiL Average",aims_avg="AIMS Average"))+
+  labs(x=NULL,y=NULL,fill=stringr::str_wrap("Correlation Coefficient",width=12))+
+  theme_bw() +
+  theme( axis.text.x  = element_text(angle=90))
+```
+
+```{r}
+# only using the non-athletes (heat map) 
+# (not currently in paper/presentation)
+
+corr_mat2 <- round(cor(dfavg2),2)  
+#head(corr_mat)
+melted_corr_mat2 <- melt(corr_mat2)
+ggplot(data = melted_corr_mat2, 
+       aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() +
+  scale_fill_distiller(palette="RdBu",direction=1,limits=c(-1,1))+
+  geom_text(aes(Var2, Var1, label = value), 
+          color = "black", size = 4)+
+  scale_y_discrete(label= c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average",mil_avg="MiL Average",aims_avg="AIMS Average"))+
+  scale_x_discrete(label= c(nfcs_avg = "NFCS Average", rse_avg = "RSE Average",scsr_avg="SCSR Average",
+                 smirr_avg = "SMIRR Average", smirn_avg = "SMIRN Average",smirx_avg="SMIRX Average", smirc_avg = "SMIRC Average", smirb_avg = "SMIRB Average",smir_avg="SMIR Average",nmrq_avg="NMRQ Average",pss_avg="PSS Average",mil_avg="MiL Average",aims_avg="AIMS Average"))+
+  labs(x=NULL,y=NULL,fill=stringr::str_wrap("Correlation Coefficient",width=12))+
+  theme_bw() +
+  theme( axis.text.x  = element_text(angle=90))
+```
+
+### Question 4 - Meaning in Life vs a subset of its indicators
+
+meaning in life - mil
+
+1\. self-esteem (rse)
+
+2\. social connectedness (scsr)
+
+3\. certainty/closure (nfcs)
+
+4\. symbolic immortality (smir)
+
+#### Trying different plots
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=rse_avg/scsr_avg,color=nfcs_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "RSE Average/SCSR Average",color="NFCS Average")+
+  scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=rse_avg/nfcs_avg,color=nfcs_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "RSE Average/NFCS Average",color="NFCS Average")+
+  scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=rse_avg/smir_avg,color=nfcs_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "RSE Average/SMIR Average",color="NFCS Average")+  scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/scsr_avg,color=nfcs_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "SMIR Average/SCSR Average",color="NFCS Average")+
+  scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=nfcs_avg/scsr_avg,color=smir_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "NFCS Average/SCSR Average",color="SMIR Average")+ scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=nfcs_avg/smir_avg,color=scsr_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "NFCS Average/SMIR Average",color="SCSR Average")+ scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=rse_avg/scsr_avg,color=smir_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "RSE Average/SCSR Average",color="SMIR Average") + scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+```
+
+```{r}
+# 500 x 400
+#include in presentation
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/pss_avg,color=rse_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "SMIR Average/PSS Average",color="RSE Average") + scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+
+#include in paper
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/pss_avg,color=rse_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "Ratio",color="RSE Average") + scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+cor(dfathlete$smir_avg/dfathlete$pss_avg,dfathlete$mil_avg)
+```
+
+```{r}
+# 500 x 400
+#include in presentation
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/pss_avg,color=rse_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "SMIR Average/PSS Average",color="RSE Average") + scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+
+#include in paper
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/pss_avg,color=rse_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "Ratio",color="RSE Average") + scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+cor(dfathlete$smir_avg/dfathlete$pss_avg,dfathlete$mil_avg)
+```
+
+```{r}
+ggplot(dfathlete, aes(x=mil_avg,y=smirr_avg/scsr_avg,color=scsr_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "SMIRR Average/SMIRX Average",color="SCSR Average") + scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+
+cor(dfathlete$smirr_avg/dfathlete$scsr_avg,dfathlete$mil_avg)
+```
+
+```{r}
+# 500 x 400
+#include in presentation
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/nfcs_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "SMIR Average/NFCS Average") +
+  theme_bw() 
+
+
+#include in paper
+ggplot(dfathlete, aes(x=mil_avg,y=smir_avg/nfcs_avg))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "Ratio") +
+  theme_bw() 
+
+cor(dfathlete$smir_avg/dfathlete$nfcs_avg,dfathlete$mil_avg)
+```
+
+```{r}
+# trying stuff
+
+ggplot(arm_data, aes(x=mil_avg,y=smir_avg/rse_avg,color=as.factor(athlete_status)))+
+  geom_point() + 
+  labs(x = "MiL Average", y = "SMIR Average/PSS Average",color="Athlete Status") + #scale_color_distiller(palette="YlOrBr",direction=1)+
+  theme_bw() 
+cor(dfathlete$smir_avg/dfathlete$pss_avg,dfathlete$mil_avg)
+```
+
