@@ -3,7 +3,7 @@ For a group project working on a semester long project, we worked with a real-wo
 
 The following list the questions we sought to answer with the accompanying visualizations and statistical tests:
 1. For those who are athletes: Is there a relationship between sport success and athletic identity?
-  - Linear Regression on several variables
+    - Linear Regression on several variables
   - Independent Sample t-Tests
 2. For those who are athletes: Is there a relationship between type of sport and athletic identity?
   - ANOVA
