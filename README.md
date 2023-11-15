@@ -8,4 +8,4 @@ You can also see the data scraping we performed in the webscraping.r file.
 
 Due to the sensitivity to some of the analysis, the shiny application and the actual use of the webscraping function into the Generative AI are omitted.
 
-In the following link, you can access a video that details my summer internship experience: https://youtu.be/OGDO8pS0rdg 
+In the following link, you can access a video that details my summer internship experience: https://youtu.be/OGDO8pS0rdg.
