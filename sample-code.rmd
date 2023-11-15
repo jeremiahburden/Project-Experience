@@ -1,3 +1,13 @@
+ #### rmd file that includes all of the statistical calculations and accompanying figures
+---
+title: "sample-code"
+author: "Jeremiah Burden"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
 # Pre-processing
 
 ## Basic cleaning
