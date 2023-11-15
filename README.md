@@ -6,4 +6,4 @@ In this branch, the percentiles.r file presents the visualizations of our backte
 
 The webscraping.r file depicts the basic webscraping we did. Due to the sensitivity to some of the analysis, the shiny application and the actual use of the webscraping function into the Generative AI are omitted.
 
-In the following link, you can access a video that details my summer internship experience: https://youtu.be/OGDO8pS0rdg.
+The following link allows access to a video that details my summer internship experience: https://youtu.be/OGDO8pS0rdg.
