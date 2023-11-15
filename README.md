@@ -1,5 +1,5 @@
 # Statistical Consultant for Psychological Research
-For a group project working on a semester long project, we worked with a real-world client to gain invaluable experience answering statistical questions for a client researcher.
+For a group project working on a semester long project, we worked with a real-world client to gain invaluable experience answering statistical questions for a client researcher. We studied the relationships between athletes and non-athletes and how they relate to their athletic identity and perceived meaning in life.
 
 The following list the questions we sought to answer with the accompanying visualizations and statistical tests:
 1. For those who are athletes: Is there a relationship between sport success and athletic identity?
