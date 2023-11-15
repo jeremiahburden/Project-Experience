@@ -1,23 +1,4 @@
----
-title: "Statistical Inference"
-author: "Jeremiah Burden"
-date: "`r Sys.Date()`"
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-
 # Pre-processing
-
-```{r }
-# loads necessary libraries, sets working directory and downloads the data
-pacman::p_load(tidyverse,ggplot2,plotly,dplyr,magrittr,tidyr,RColorBrewer,reshape2,plyr,stringr,Hmisc,qqplotr,olsrr,factoextra,rsample,caret,rattle)
-
-setwd('/Users/jeremiahburden/Downloads/School/Fall 2023/MA 325 Statistical Consulting/Code') #change this to your working directory of wherever the file is
-#arm_data <- read_csv("renamed_arm_study_data.csv")
-arm_data <- read_csv("sept27_arm_study_data.csv")
-theme_set(theme_bw())
-```
 
 ## Basic cleaning
  #### removed due to sensitivity of analysis
