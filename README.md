@@ -2,7 +2,11 @@
 
 Welcome to a summary of my work experience! In this repository, you can find many of the projects I've recently worked on, the accompanying code, explanation, and analysis. Here are the projects to which I've contributed, divided by the field of work:
 - Sports Analytics
-  - Producing Volleyball Coaching Reports
+  - Volleyball
+    - Coaching Reports
+    - Optimal Serve Speed Charts
+    - Building an interactive R Shiny Dashboard
+    - High School Participation Dashboard 
   - Machine Learning Modeling in the NBA
   - Building a Baseball Analytics Database
   - Analyzing Horse Racing Analytics
